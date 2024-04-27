@@ -40,7 +40,7 @@ void initialize_kotlin_jvm_module(ModuleInitializationLevel p_level) {
 #endif
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
-        GDKotlin::get_instance().init();
+        GDKotlin::get_instance().initialize_up_to(GDKotlin::State::CORE_LIBRARY_INITIALIZED);
 
         GDREGISTER_ABSTRACT_CLASS(JvmScript);
         GDREGISTER_CLASS(GdjScript);
@@ -89,5 +89,5 @@ void uninitialize_kotlin_jvm_module(ModuleInitializationLevel p_level) {
     ScriptServer::unregister_language(jvm_language);
     memdelete(jvm_language);
 
-    GDKotlin::get_instance().finish();
+    GDKotlin::get_instance().finalize_down_to(GDKotlin::State::NOT_STARTED);
 }
