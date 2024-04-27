@@ -232,7 +232,7 @@ bool GDKotlin::load_bootstrap() {
 bool GDKotlin::initialize_core_library() {
     jni::Env env {jni::Jvm::current_env()};
 
-    if (!JvmManager::initialize_jni_classes(env, bootstrap_class_loader)) { return false; }
+    if (!JvmManager::initialize_jvm_wrappers(env, bootstrap_class_loader)) { return false; }
 
     if (user_configuration.max_string_size != -1) {
         LongStringQueue::get_instance().set_string_max_size(env, user_configuration.max_string_size);
@@ -307,7 +307,7 @@ void GDKotlin::finalize_core_library() const {
         LOG_VERBOSE("JVM GC thread was closed");
         MemoryManager::get_instance().clean_up(env);
     }
-    JvmManager::destroy_jni_classes();
+    JvmManager::finalize_jvm_wrappers(env, bootstrap_class_loader);
 }
 
 void GDKotlin::unload_boostrap() {
