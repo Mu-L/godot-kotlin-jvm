@@ -265,7 +265,7 @@ bool GDKotlin::load_user_code() {
         return true;
     } else {
 #ifdef TOOLS_ENABLED
-        String user_code_path {String(BUILD_DIRECTORY) + String(USER_CODE_FILE)};
+        String user_code_path {String(RES_DIRECTORY).path_join(JVM_DIRECTORY).path_join(USER_CODE_FILE)};
 #else
         String user_code_path {copy_new_file_to_user_dir(USER_CODE_FILE)};
 #endif
@@ -280,7 +280,7 @@ bool GDKotlin::load_user_code() {
             return false;
         }
 
-        LOG_VERBOSE(vformat("Loading usercode file at: %s", user_code_path));
+        jar = ResourceLoader::load(user_code_path);
 
         ClassLoader* user_class_loader = ClassLoader::create_instance(
           env,
@@ -335,8 +335,10 @@ void GDKotlin::unload_boostrap() {
     }
 
 void GDKotlin::initialize_up_to(State target_state) {
-    fetch_user_configuration();
-    set_jvm_options();
+    if(state == State::NOT_STARTED){
+        fetch_user_configuration();
+        set_jvm_options();
+    }
 
 #ifdef DYNAMIC_JVM
     SET_LOADING_STATE(load_dynamic_lib(), JVM_LIBRARY_LOADED, target_state)

@@ -513,7 +513,7 @@ public open class XRInterface internal constructor() : RefCounted() {
     public val initializePtr: VoidPtr = TypeManager.getMethodBindPtr("XRInterface", "initialize")
 
     public val uninitializePtr: VoidPtr =
-        TypeManager.getMethodBindPtr("XRInterface", "finalize")
+        TypeManager.getMethodBindPtr("XRInterface", "uninitialize")
 
     public val getSystemInfoPtr: VoidPtr =
         TypeManager.getMethodBindPtr("XRInterface", "get_system_info")
