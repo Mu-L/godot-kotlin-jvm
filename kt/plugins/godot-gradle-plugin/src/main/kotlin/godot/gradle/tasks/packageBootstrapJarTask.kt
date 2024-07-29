@@ -5,10 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
 
-fun Project.packageBootstrapJarTask(
-    createBuildLockTask: TaskProvider<out Task>,
-    deleteBuildLockTask: TaskProvider<out Task>
-): TaskProvider<out Task> {
+fun Project.packageBootstrapJarTask(): TaskProvider<out Task> {
     return tasks.register("packageBootstrapJar", ShadowJar::class.java) {
         with(it) {
             group = "godot-kotlin-jvm"
@@ -17,9 +14,6 @@ fun Project.packageBootstrapJarTask(
             archiveBaseName.set("godot-bootstrap")
             configurations.clear()
             configurations.add(this@packageBootstrapJarTask.configurations.getByName("bootstrap"))
-
-            dependsOn(createBuildLockTask)
-            finalizedBy(deleteBuildLockTask)
         }
     }
 }
