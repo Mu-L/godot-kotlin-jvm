@@ -11,8 +11,10 @@ To export your game, you need to add our export templates to Godot. After you've
 After the export templates have been added, you can export your game. Your game `jar` will be included in `pck`.
 On desktop platforms, this also copies the JRE folder of your project in the exported game folder.
 
-!!!danger
-    The official export templates from Godot will not work! You have to use our export templates or build your own! Therefore, you cannot just hit the "Download and Install" button in the export template manager!
+!!!warning
+    The official export templates from Godot will not work! You have to use our export templates or build your own!
+    Note that because this is not an official build, the template manager will fail to find a link to our templates and display a warning.
+    You can simply ignore it. Downloading our templates from the Godot editor is currently not possible, we opened a [proposal](godotengine/godot-proposals#10894) for it.
 
 
 ## Requirements
@@ -63,12 +65,13 @@ Don't forget to remove them when writing an uninstaller for your game.
 
 In order to build for Android, set the `isAndroidExportEnabled` flag to `true` in your build file.
 
-=== "build.gradke.kts"
-    ```kt
-    godot {
-        isAndroidExportEnabled.set(true)
-    }
-    ```
+/// tab | build.gradke.kts
+```kt
+godot {
+    isAndroidExportEnabled.set(true)
+}
+```
+///
 
 On Android, we do not embed a JVM, we use the existing VM provided by the OS. In order for your game to load the necessary JAR files,
 they need to be converted into `.dex` format. Our Gradle plugin will handle this for you but it requires that you have the android build tools installed (you can easily install and update them with the SDK manager in Android Studio or by installing the Android plugin in Intellij and using the SDK manager there).
