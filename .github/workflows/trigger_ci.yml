@@ -15,24 +15,26 @@ env:
   JVM_VERSION: &jvm_version '17'
 
 jobs:
-  # Path-change gates. A pure-doc PR (or one only touching e.g. the api-generator)
+  # Path-change gate. A pure-doc PR (or one only touching e.g. the api-generator)
   # shouldn't trigger the native gdextension build/assemble/test chain, and vice versa.
-  detect-native-changes:
-    name: 🔍 Detect native/Kotlin-library changes
+  # One job, one checkout, four diffs.
+  detect-changes:
+    name: 🔍 Detect changes
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.detect.outputs.changed }}
+      native: ${{ steps.native.outputs.changed }}
+      ci-cd-tests: ${{ steps.ci-cd-tests.outputs.changed }}
+      api-generator: ${{ steps.api-generator.outputs.changed }}
+      ide-plugin: ${{ steps.ide-plugin.outputs.changed }}
     steps:
       - name: Clone Godot JVM module.
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Detect changes
-        id: detect
+      - name: Native gdextension source and Kotlin runtime libraries
+        id: native
         uses: ./.github/actions/detect-path-changes
         with:
-          # Native gdextension source and Kotlin runtime libraries. CI/CD and
-          # Gradle/test-harness changes have their own gate below.
           paths: |
             cpp
             kt/android-plugin
@@ -43,19 +45,8 @@ jobs:
             kt/godot-registration
             kt/common
             kt/tools-common
-
-  detect-ci-cd-tests-changes:
-    name: 🔍 Detect CI/CD/tests changes
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - name: Clone Godot JVM module.
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect changes
-        id: detect
+      - name: CI/CD, Gradle plugin and test harness
+        id: ci-cd-tests
         uses: ./.github/actions/detect-path-changes
         with:
           paths: |
@@ -65,38 +56,16 @@ jobs:
             kt/build.gradle.kts
             kt/plugins/godot-gradle-plugin
             harness/tests
-
-  detect-api-generator-changes:
-    name: 🔍 Detect API generator changes
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - name: Clone Godot JVM module.
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect changes
-        id: detect
+      - name: API generator
+        id: api-generator
         uses: ./.github/actions/detect-path-changes
         with:
           paths: |
             kt/api-generator
             kt/common
             kt/tools-common
-
-  detect-ide-plugin-changes:
-    name: 🔍 Detect IDE plugin changes
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - name: Clone Godot JVM module.
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect changes
-        id: detect
+      - name: IDE plugin
+        id: ide-plugin
         uses: ./.github/actions/detect-path-changes
         with:
           paths: |
@@ -108,22 +77,19 @@ jobs:
     name: ☕ Build Jvm
     uses: ./.github/workflows/build_jvm.yml
     needs:
-      - detect-api-generator-changes
-      - detect-ide-plugin-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-api-generator-changes.outputs.changed == 'true' || needs.detect-ide-plugin-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.api-generator == 'true' || needs.detect-changes.outputs.ide-plugin == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
     with:
       jvm-version: *jvm_version
-      run-api-generator: ${{ needs.detect-api-generator-changes.outputs.changed == 'true' }}
-      run-ide-plugin: ${{ needs.detect-ide-plugin-changes.outputs.changed == 'true' }}
+      run-api-generator: ${{ needs.detect-changes.outputs.api-generator == 'true' }}
+      run-ide-plugin: ${{ needs.detect-changes.outputs.ide-plugin == 'true' }}
 
   build-android:
     name: 🤖 Build Android
     uses: ./.github/workflows/build_android.yml
     needs:
-      - detect-native-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-native-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.native == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
     with:
       jvm-version: *jvm_version
 
@@ -131,9 +97,8 @@ jobs:
     name: 🍏 Build iOS
     uses: ./.github/workflows/build_ios.yml
     needs:
-      - detect-native-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-native-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.native == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
     with:
       jvm-version: *jvm_version
 
@@ -141,25 +106,22 @@ jobs:
     name: 🐧 Build Linux
     uses: ./.github/workflows/build_linux.yml
     needs:
-      - detect-native-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-native-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.native == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
 
   build-macos:
     name: 🍎 Build macOS
     uses: ./.github/workflows/build_macos.yml
     needs:
-      - detect-native-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-native-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.native == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
 
   build-windows:
     name: 🪟 Build Windows
     uses: ./.github/workflows/build_windows.yml
     needs:
-      - detect-native-changes
-      - detect-ci-cd-tests-changes
-    if: needs.detect-native-changes.outputs.changed == 'true' || needs.detect-ci-cd-tests-changes.outputs.changed == 'true'
+      - detect-changes
+    if: needs.detect-changes.outputs.native == 'true' || needs.detect-changes.outputs.ci-cd-tests == 'true'
 
   assemble-android:
     name: 🤖 Assemble Android

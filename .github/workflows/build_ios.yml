@@ -39,7 +39,7 @@ jobs:
       - uses: ./.github/actions/scons-cache
         with:
           mode: restore
-          cache-name: ${{ matrix.cache-name }}
+          name: ${{ matrix.cache-name }}
       - uses: ./.github/actions/gdextension-build
         with:
           platform: ios
@@ -50,7 +50,7 @@ jobs:
         if: always()
         with:
           mode: save
-          cache-name: ${{ matrix.cache-name }}
+          name: ${{ matrix.cache-name }}
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.cache-name }}

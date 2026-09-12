@@ -50,7 +50,7 @@ jobs:
       - uses: ./.github/actions/scons-cache
         with:
           mode: restore
-          cache-name: ${{ matrix.cache-name }}
+          name: ${{ matrix.cache-name }}
       - uses: ammaraskar/msvc-problem-matcher@master
       - uses: ./.github/actions/gdextension-build
         with:
@@ -62,7 +62,7 @@ jobs:
         if: always()
         with:
           mode: save
-          cache-name: ${{ matrix.cache-name }}
+          name: ${{ matrix.cache-name }}
       - shell: pwsh
         run: Remove-Item artifact/addons/jvm/libs/windows/*.exp, artifact/addons/jvm/libs/windows/*.lib -Force -ErrorAction SilentlyContinue
       - name: Remove debug symbols

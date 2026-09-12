@@ -19,18 +19,12 @@ jobs:
   build-api-generator:
     runs-on: ubuntu-latest
     name: Build API generator
+    env:
+      # See VersionInfoPlugin: same build version as the test jobs, so their Gradle build cache entries apply here.
+      ORG_GRADLE_PROJECT_reproducibleVersion: 'true'
     if: inputs.run-api-generator
 
     steps:
-      - name: Maximize build space
-        uses: AdityaGarg8/remove-unwanted-software@v4.1
-        with:
-          remove-dotnet: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
-          remove-swapfile: 'true'
-
       - name: Clone Godot JVM module.
         uses: actions/checkout@v6
 
@@ -42,13 +36,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: false
-          cache-cleanup: always
-          gradle-home-cache-excludes: |
-            wrapper/dists
-            caches/*/generated-gradle-jars
-            daemon
-            notifications
+          # The Gradle build cache is shared through ./.github/actions/gradle-build-cache below, nothing else is worth caching.
+          cache-disabled: true
+
+      # Kotlin compile outputs are platform independent, so every job reads the entry for its flavor written by a Linux
+      # job: debug by the Linux editor tests, release (DEBUG preprocessor flag off) by the Android release tests.
+      - name: Restore Gradle build cache
+        uses: ./.github/actions/gradle-build-cache
+        with:
+          mode: restore
+          flavor: debug
+      - name: Restore Gradle dependencies
+        uses: ./.github/actions/gradle-deps-cache
+        with:
+          mode: restore
 
       - name: Build API generator
         run: kt/gradlew -p kt :api-generator:build
@@ -66,17 +67,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and verify IDE plugin
     if: inputs.run-ide-plugin
+    env:
+      ORG_GRADLE_PROJECT_reproducibleVersion: 'true'
 
     steps:
-      - name: Maximize build space
-        uses: AdityaGarg8/remove-unwanted-software@v4.1
-        with:
-          remove-dotnet: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
-          remove-swapfile: 'true'
-
       - name: Clone Godot JVM module.
         uses: actions/checkout@v6
 
@@ -88,13 +82,26 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: false
-          cache-cleanup: always
-          gradle-home-cache-excludes: |
-            wrapper/dists
-            caches/*/generated-gradle-jars
-            daemon
-            notifications
+          # The Gradle build cache is shared through ./.github/actions/gradle-build-cache below, nothing else is worth caching.
+          cache-disabled: true
+
+      # Kotlin compile outputs are platform independent, so every job reads the entry for its flavor written by a Linux
+      # job: debug by the Linux editor tests, release (DEBUG preprocessor flag off) by the Android release tests.
+      - name: Restore Gradle build cache
+        uses: ./.github/actions/gradle-build-cache
+        with:
+          mode: restore
+          flavor: debug
+      - name: Restore Gradle dependencies
+        uses: ./.github/actions/gradle-deps-cache
+        with:
+          mode: restore
+
+      - name: Restore Kotlin build outputs
+        uses: ./.github/actions/kotlin-cache
+        with:
+          mode: restore
+          name: ide-plugin
 
       - name: Build and verify IDE plugin
         run: kt/gradlew -p kt :godot-intellij-plugin:buildPlugin :godot-intellij-plugin:verifyPlugin
@@ -104,3 +111,9 @@ jobs:
         with:
           name: jvm_intellij-plugin
           path: kt/plugins/godot-intellij-plugin/build/distributions/godot-intellij-plugin-*.zip
+
+      - name: Save Kotlin build outputs
+        uses: ./.github/actions/kotlin-cache
+        with:
+          mode: save
+          name: ide-plugin

@@ -69,11 +69,10 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            // The oldest supported IDE, plus the versions the Marketplace verifies against.
-            create(IntelliJPlatformType.IntellijIdeaCommunity, "2025.1")
-            create(IntelliJPlatformType.IntellijIdea, "2025.2.6.3")
-            create(IntelliJPlatformType.IntellijIdea, "2026.1.5")
-            create(IntelliJPlatformType.IntellijIdea, "2026.2.1")
+            // Compilation targets the oldest supported IDE (sinceBuild), which already pins the old end of the
+            // range, so the verifier only checks the newest release for deprecated or removed APIs. Every IDE
+            // listed here is downloaded and unpacked on each CI run; keep it to one.
+            create(IntelliJPlatformType.IntellijIdea, "2026.2.2")
         }
     }
 }

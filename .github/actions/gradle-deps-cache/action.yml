@@ -1,0 +1,22 @@
+name: Gradle dependencies cache
+description: >
+  Downloaded dependency jars and Gradle's instrumented plugin jars. Pure JVM artifacts, identical on every OS,
+  so there is a single entry. Written by the Android release tests, the job that resolves the superset: everything
+  the harness needs plus the Android Gradle plugin tree that Godot's template build pulls. Transforms and the
+  wrapper distribution are deliberately left out: too large for the seconds they save. Master-only writes, see
+  master-cache.
+inputs:
+  mode:
+    description: "'restore' or 'save'."
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/master-cache
+      with:
+        mode: ${{ inputs.mode }}
+        key: gradle-deps
+        path: |
+          ~/.gradle/caches/modules-2
+          ~/.gradle/caches/jars-*
